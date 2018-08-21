@@ -10,6 +10,7 @@ class XMLHelper {
   constructor(xmlDoc) {
     this.xmlDoc = xmlDoc;
   }
+
   appendChild = (parentElement, name, text) => {
     let childElement = this.xmlDoc.createElement(name);
     if (typeof text !== 'undefined') {
@@ -19,22 +20,34 @@ class XMLHelper {
     parentElement.appendChild(childElement);
     return childElement;
   }
+
+  appendAttribute = (name, attribute, node) => {
+    if (_.isObject(attribute)) {
+      let childCDATA;
+      const cdata = _.get(attribute, 'cdata');
+      if (cdata) {
+        childCDATA = this.xmlDoc.createCDATASection(cdata);
+      }
+      const nextNode = this.appendChild(node, name);
+      if (childCDATA) {
+        nextNode.appendChild(childCDATA);
+      } else {
+        this.appendEachChild(nextNode, attribute);
+      }
+    } else {
+      this.appendChild(node, name, attribute);
+    }
+  }
+
   appendEachChild = (node, body) => {
     _.forEach(body, (value, key) => {
-      if (_.isObject(value)) {
-        let childCDATA;
-        const cdata = _.get(value, 'cdata');
-        if (cdata) {
-          childCDATA = this.xmlDoc.createCDATASection(cdata);
-        }
+      if (_.isArray(value)) {
         const nextNode = this.appendChild(node, key);
-        if (childCDATA) {
-          nextNode.appendChild(childCDATA);
-        } else {
-          this.appendEachChild(nextNode, value);
-        }
+        _.forEach(value, subValue => {
+          this.appendEachChild(nextNode, subValue);
+        });
       } else {
-        this.appendChild(node, key, value);
+        this.appendAttribute(key, value, node);
       }
     });
   }
