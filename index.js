@@ -2,7 +2,7 @@ import _ from 'lodash';
 import { DOMParser, XMLSerializer } from 'xmldom';
 import { parseString } from 'react-native-xml2js';
 
-const fetch = fetch || require('node-fetch');
+// const fetch = fetch || require('node-fetch');
 
 const xmlHeader = '<?xml version="1.0" encoding="utf-8"?>';
 
