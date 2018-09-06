@@ -55,27 +55,20 @@ class XMLHelper {
 
 class SoapRequest {
   constructor(props) {
-    this.method = 'POST';
-    this.headers = {
-      'Accept': 'text/xml',
-      'Content-Type': 'text/xml;charset=UTF-8'
+    this.defaults = {
+      headers: {
+        'Accept': 'text/xml',
+        'Content-Type': 'text/xml;charset=UTF-8'
+      },
+      soapEnv: '<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"></soap:Envelope>'
     };
-    this.soapEnv = '<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"></soap:Envelope>';
     // Init properties
     this.init(props);
-    // Init XML elements
-    this.xmlDoc = new DOMParser().parseFromString(this.soapEnv);
-    this.XMLHelper = new XMLHelper(this.xmlDoc);
-    this.rootElement = this.xmlDoc.documentElement;
-    this.bodyElement = this.XMLHelper.appendChild(this.rootElement, 'soapenv:Body');
   }
 
   init = (props) => {
-    this.headers = _.get(props, 'headers', this.headers);
-    this.soapEnv = _.get(props, 'soapEnv', this.soapEnv);
+    this.soapEnv = _.get(props, 'soapEnv', this.defaults.soapEnv);
   }
-
-  appendHeaders = (headers) => this.headers = { ...this.headers, ...headers };
 
   getXMLRequestString = () => {
     const xmlSerializer = new XMLSerializer();
@@ -84,13 +77,19 @@ class SoapRequest {
 
   createRequest = (url, headers, body) => {
     this.requestURL = url;
-    this.appendHeaders(headers);
-    this.XMLHelper.appendEachChild(this.bodyElement, body);   
+    this.headers = { ...this.defaults.headers, ...headers };
+    // Init XML
+    this.xmlDoc = new DOMParser().parseFromString(this.soapEnv);
+    this.XMLHelper = new XMLHelper(this.xmlDoc);
+    this.rootElement = this.xmlDoc.documentElement;
+    this.bodyElement = this.XMLHelper.appendChild(this.rootElement, 'soapenv:Body');
+    // Append body
+    this.XMLHelper.appendEachChild(this.bodyElement, body);
   }
 
   sendRequest = async () => {
     let response = await fetch(this.requestURL, {
-      method: this.method,
+      method: 'POST',
       headers: this.headers,
       body: this.getXMLRequestString()
     });
